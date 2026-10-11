@@ -1,0 +1,30 @@
+# Runtime-only Android configuration for MOTHER 3 (Japan).
+
+[game]
+name           = "MOTHER 3"
+short_name     = "mother3"
+default_region = "jpn"
+
+[bios]
+path = "../../bios/gba_bios.bin"
+sha1 = "300c20df6731a33952ded8c436f7f186d25d3492"
+
+[rom]
+path = "../../roms/mother3_jpn.gba"
+
+[program]
+name         = "MOTHER 3 (JPN)"
+id           = "mother3_jpn"
+load_address = 0x08000000
+size         = 0x02000000
+entry_pc     = 0x08000000
+
+[identity]
+sha1 = "4f0f493e12c2a8c61b2d809af03f7abf87a85776"
+
+[save]
+type = "flash512"
+
+[runtime]
+debug_port   = 19893
+window_title = "Mother3Recomp"

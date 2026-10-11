@@ -1,0 +1,66 @@
+plugins {
+    id "com.android.application"
+}
+
+def gameRoot = rootDir.parentFile
+def pick = { String prop, String env, File fallback ->
+    def value = providers.gradleProperty(prop).orNull ?: System.getenv(env)
+    return value ? new File(value) : fallback
+}
+def engineRoot = pick("gbarecompRoot", "GBARECOMP_ROOT", new File(gameRoot, "gbarecomp"))
+def recompUiRoot = pick("recompUiRoot", "RECOMP_UI_ROOT", new File(gameRoot, "recomp-ui"))
+
+def requested = (providers.gradleProperty("mother3Variant").orNull ?: "en")
+    .toString().toLowerCase()
+def english = ["en", "english", "mother3en"].contains(requested)
+if (!english && !["jp", "jpn", "ja", "mother3"].contains(requested)) {
+    throw new GradleException(
+        "Unknown -Pmother3Variant=${requested}. Use en (default) or jpn.")
+}
+
+def variant = english ? "mother3en" : "mother3"
+def romFile = english ? "mother3_en.gba" : "mother3_jpn.gba"
+def romSha1 = english
+    ? "306fb8874533b0fd0796208faa8bed2db4ae77fb"
+    : "4f0f493e12c2a8c61b2d809af03f7abf87a85776"
+def title = english ? "MOTHER 3 (EN)" : "MOTHER 3"
+def androidToml = new File(rootDir,
+    english ? "game_android_mother3en.toml" : "game_android_mother3.toml")
+
+ext.gbaGame = [
+    applicationId  : english
+        ? "com.ylports.mother3recomp.en.dev"
+        : "com.ylports.mother3recomp.jpn.dev",
+    versionCode    : 2,
+    versionName    : "0.1.3-fast",
+    title          : title,
+    romLabel       : english
+        ? "MOTHER 3 English fan-translation ROM"
+        : "MOTHER 3 Japanese ROM",
+    romSha1        : [romSha1],
+    romSize        : 33554432,
+    romFile        : romFile,
+    biosRequired   : true,
+    orientation    : "landscape",
+    payloadVersion : "1",
+    setupNote      : "Importa tu propia ROM compatible y un dump de GBA BIOS. " +
+                     "El APK público no incluye archivos de Nintendo.",
+    variant        : variant,
+    gameToml       : androidToml,
+    payloadDirs    : [
+        [from: new File(gameRoot, "variants/${variant}/config"),
+         into: "variants/${variant}/config"],
+    ],
+    gameRoot       : gameRoot,
+    engineRoot     : engineRoot,
+    recompUiRoot   : recompUiRoot,
+    cmakeArguments : ["-DMOTHER3_ANDROID_VARIANT=${variant}"],
+    nativeJobs     : 2,
+    releaseAbis    : ["arm64-v8a"],
+    debugAbis      : ["arm64-v8a", "x86_64"],
+]
+
+apply from: new File(engineRoot, "platform/android/gbarecomp-app.gradle")
+
+android.sourceSets.main.manifest.srcFile file("src/main/AndroidManifest.xml")
+android.sourceSets.main.java.srcDir file("src/main/java")

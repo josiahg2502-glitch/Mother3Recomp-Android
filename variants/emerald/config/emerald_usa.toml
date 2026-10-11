@@ -1,0 +1,14 @@
+# emerald_usa.toml — region overrides for Pokémon Emerald USA.
+#
+# Layered on top of ../game.toml (config/<short_name>_<region>.toml =
+# config/emerald_usa.toml). Cross-verified against pret/pokeemerald's
+# emerald.sha1 build target.
+
+[rom]
+sha1  = "f3ae088181bf583e55daf962a92bb46f4f1d07b7"
+
+[save]
+type = "flash1m"    # 1 Mbit (128 KB) flash + RTC on the Emerald cart
+size = "0x20000"
+
+[quirks]

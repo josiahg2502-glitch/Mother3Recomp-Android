@@ -1,0 +1,113 @@
+# User-provided cartridge ROMs (copyrighted; never commit).
+variants/*/roms/
+*.gba
+*.GBA
+
+# Save files
+saves/
+*.sav
+*.srm
+*.fla
+*.flash
+
+# Vendored decomp / reference projects (built in WSL; not committed).
+# pret/pokeemerald is a tracked SUBMODULE at third_party/pokeemerald — it pins the
+# exact upstream revision whose build reproduces this project's ROM, which
+# is what makes its symbol addresses meaningful here. It is provenance
+# only: no decomp source enters the build (tools/decomp/import-symbols.sh
+# reads names, addresses and sizes out of a WSL-side build). Note the glob:
+# a bare `third_party/` excludes the DIRECTORY, and git cannot re-include a
+# path underneath an excluded directory, so the !third_party/pokeemerald negation
+# would never take effect. Everything else here stays ignored (agbcc
+# installs, build sandboxes, large dumps).
+third_party/*
+!third_party/pokeemerald
+!third_party/mother3
+
+# Build output
+build/
+build-*/
+.bldtmp/
+*.obj
+*.pdb
+*.ilk
+*.exe
+*.dll
+*.tlog
+release-stage/
+
+# Sidecar caches written by the asset picker.
+bios.cfg
+rom.cfg
+
+# Generated code (derivative of copyrighted ROM; regenerate locally).
+# Per ../gbarecomp/CLAUDE.md "Generated C is never edited". The README
+# stays tracked so each variant's generated/ dir exists in fresh clones.
+variants/*/generated/*.c
+variants/*/generated/*.cpp
+variants/*/generated/*.h
+variants/*/generated/*.json
+
+# Large readelf/nm dumps from the byte-matching WSL decomp build — the
+# importer's INPUT (see ../_gen3_symbols/). The tracked symbols/*.toml +
+# *.tsv are its committed OUTPUT.
+variants/*/symbols/*_readelf.txt
+variants/*/symbols/*_sections.txt
+variants/*/symbols/*nm.txt
+
+# Diagnostic / triage artifacts + scratch.
+_triage/
+*.log
+*.bmp
+*.png
+*.rgb
+_*
+*.bak
+*.csv
+*.frag
+recomp_coverage.json
+
+# Local-only config overrides.
+*.local.toml
+*.local.ini
+debug.local.ini
+
+# IDE / editor / OS
+.vscode/
+.idea/
+.vs/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Claude auto-memory (per-user, never committed).
+memory/
+
+# README showcase screenshots (override the *.png ignore above)
+!docs/screenshots/
+!docs/screenshots/*.png
+
+# Decomp symbol-import INPUTS: the bulky readelf dumps tools/decomp/import-symbols.sh
+# captures from the pinned decomp build. Regenerable and large; the small
+# reviewable OUTPUTS (symbols/*.tsv, symbols/<ID>_symbols.toml) and the
+# <decomp>_revision.txt provenance stamp stay tracked.
+symbols/*_syms.txt
+symbols/*_sections.txt
+variants/*/symbols/*_syms.txt
+variants/*/symbols/*_sections.txt
+
+# Per-machine runtime output (self-heal JIT cache, coverage/miss reports,
+# local keybinds, regen backups).
+recomp_cache/
+recomp_coverage_*.json
+recomp_master_misses_*.toml.frag
+keybinds.ini
+variants/*/generated.bak/
+
+# Android/Gradle local output
+android/.gradle/
+android/local.properties

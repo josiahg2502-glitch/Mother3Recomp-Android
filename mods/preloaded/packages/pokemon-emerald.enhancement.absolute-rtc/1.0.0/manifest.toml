@@ -1,0 +1,24 @@
+format_version = 1
+id = "pokemon-emerald.enhancement.absolute-rtc"
+version = "1.0.0"
+name = "Pokemon Emerald Absolute RTC"
+author = "mstan"
+description = "Makes Emerald's displayed clock follow the boot-seeded cartridge RTC instead of the saved bedroom-clock offset."
+license = "MIT"
+resolver = "declarative"
+save_compatibility = "shared"
+
+[[target]]
+game_id = "pokemon-emerald-us"
+rom_sha1 = "f3ae088181bf583e55daf962a92bb46f4f1d07b7"
+
+[[feature]]
+id = "absolute-rtc"
+name = "Absolute RTC"
+description = "Use the host-seeded cartridge RTC directly for Emerald's in-game clock."
+group = "Clock"
+default_enabled = false
+
+[[plugin]]
+feature = "absolute-rtc"
+id = "pokemon-emerald.absolute-rtc"

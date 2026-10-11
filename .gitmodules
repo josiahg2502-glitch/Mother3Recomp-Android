@@ -1,0 +1,12 @@
+[submodule "recomp-ui"]
+	path = recomp-ui
+	url = https://github.com/mstan/recomp-ui.git
+[submodule "gbarecomp"]
+	path = gbarecomp
+	url = https://github.com/agray0425/gbarecomp
+[submodule "third_party/pokeemerald"]
+	path = third_party/pokeemerald
+	url = https://github.com/pret/pokeemerald
+[submodule "third_party/mother3"]
+	path = third_party/mother3
+	url = https://github.com/agray0425/mother3

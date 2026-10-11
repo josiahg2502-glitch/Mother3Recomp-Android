@@ -1,0 +1,113 @@
+name: Android APK
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "android/**"
+      - "src/**"
+      - "CMakeLists.txt"
+      - ".github/workflows/android.yml"
+  push:
+    branches: [android-port]
+    paths:
+      - "android/**"
+      - "src/**"
+      - "variants/**"
+      - "gbarecomp"
+      - "recomp-ui"
+      - "CMakeLists.txt"
+      - ".github/workflows/android.yml"
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: "MOTHER 3 variant"
+        required: true
+        default: "en"
+        type: choice
+        options:
+          - en
+          - jpn
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [en, jpn]
+    env:
+      MOTHER3_VARIANT: ${{ matrix.variant }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Checkout required submodules
+        shell: bash
+        run: |
+          git submodule update --init --depth=1 gbarecomp recomp-ui
+          git -C gbarecomp config submodule.external/arm-recomp-core.url \
+            https://github.com/mstan/arm-recomp-core.git
+          git -C gbarecomp submodule update --init --depth=1 \
+            external/arm-recomp-core platform/android/third_party/SDL
+          rm -f gbarecomp/platform/android/third_party/SDL/android-project/gradle/wrapper/gradle-wrapper.jar
+
+      - name: Restore fixed development signing key
+        shell: bash
+        run: |
+          base64 -d android/mother3-dev-keystore.b64 > android/mother3-dev.p12
+          keytool -list -keystore android/mother3-dev.p12 \
+            -storepass mother3dev2026 -alias mother3dev >/dev/null
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install Android native toolchain
+        shell: bash
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+        run: |
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -path '*/bin/sdkmanager' | sort | tail -n 1)"
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0" \
+            "ndk;27.1.12297006" "cmake;3.22.1"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.11.1"
+          validate-wrappers: false
+
+      - name: Build stable-signed ARM64 APK
+        working-directory: android
+        run: |
+          gradle :app:assembleRelease \
+            -Pmother3Variant="${MOTHER3_VARIANT}" \
+            -PgbaAbis=arm64-v8a \
+            -PgbaNativeJobs=2 \
+            -PgbaKeystore="$GITHUB_WORKSPACE/android/mother3-dev.p12" \
+            -PgbaKeystorePassword=mother3dev2026 \
+            -PgbaKeyAlias=mother3dev \
+            -PgbaKeyPassword=mother3dev2026 \
+            --stacktrace
+
+      - name: Collect APK
+        shell: bash
+        run: |
+          mkdir -p out
+          cp android/app/build/outputs/apk/release/app-release.apk \
+             "out/Mother3Recomp-${MOTHER3_VARIANT}-android-arm64-installfix.apk"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mother3Recomp-${{ env.MOTHER3_VARIANT }}-android-arm64-installfix
+          path: out/*.apk
+          if-no-files-found: error

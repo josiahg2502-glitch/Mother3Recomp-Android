@@ -1,0 +1,20 @@
+# mother3en_en.toml — region overrides for MOTHER 3 (English fan translation).
+#
+# Layered on top of ../game.toml, matched as
+# config/<short_name>_<region>.toml = config/mother3en_en.toml
+# (short_name = "mother3en", default_region = "en"). Before this rename the
+# file was never loaded, because the runtime looked for mother3en_jpn.toml.
+#
+# SHA-1 is the EN-patched ROM, the same hash CMake builds in.
+
+[rom]
+sha1 = "306FB8874533B0FD0796208FAA8BED2DB4AE77FB"
+
+[save]
+type = "flash512"   # 64 KB; matches ../game.toml. See the CHECK note there.
+
+[quirks]
+# Empty for now. Mother 3 has no cartridge RTC, gyro or solar sensor,
+# so nothing to declare here yet. Expect PPU-side quirks to surface
+# during bring-up instead — the game leans on 30 Hz flicker for
+# transparency effects, which is a known trouble spot on modern displays.

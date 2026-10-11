@@ -1,0 +1,19 @@
+# mother3_jpn.toml — region overrides for MOTHER 3 (Japan).
+#
+# Layered on top of ../game.toml, matched as
+# config/<short_name>_<region>.toml = config/mother3_jpn.toml
+#
+# Cross-verified against the Kurausukun/mother3 decomp's mother3.sha1
+# build target — the same hash the decomp's build.sh checks.
+
+[rom]
+sha1 = "4f0f493e12c2a8c61b2d809af03f7abf87a85776"
+
+[save]
+type = "flash512"   # 64 KB; matches ../game.toml. See the CHECK note there.
+
+[quirks]
+# Empty for now. Mother 3 has no cartridge RTC, gyro or solar sensor,
+# so nothing to declare here yet. Expect PPU-side quirks to surface
+# during bring-up instead — the game leans on 30 Hz flicker for
+# transparency effects, which is a known trouble spot on modern displays.

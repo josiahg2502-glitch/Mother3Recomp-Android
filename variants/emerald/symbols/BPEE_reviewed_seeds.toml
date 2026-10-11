@@ -1,0 +1,881 @@
+# Reviewed dispatch-miss seeds — HAND-OWNED, not importer output.
+#
+# Pokemon Emerald Version (USA)
+#
+# Each entry is an interior guest PC that is a legitimate resume
+# point but not a function entry: an IRQ or SWI returns into the
+# middle of an already-generated body (the WaitForVBlank busy
+# spin, the m4a mixer, libgcc's memcpy/divsi). Static discovery
+# cannot reach them, so without a seed here each one dispatch
+# misses and gets bridged through the interpreter.
+#
+# They were found from the self-heal miss log and reviewed by
+# hand. This file is a CONFIG OVERLAY layered on game.toml and is
+# never written by the importer, so re-importing symbols cannot
+# lose them. Add new ones only after reviewing a miss log entry.
+#
+# Migrated 2026-08-21 out of the importer's generated TOML, which
+# used to double as the recompile config.
+
+# Must match the base config: these are exact addresses in
+# one specific binary.
+[identity]
+sha1 = "f3ae088181bf583e55daf962a92bb46f4f1d07b7"
+
+[[extra_func]]
+addr = 0x080008C8
+mode = "thumb"
+resume = true
+name = "resume_080008c8"
+note = "reviewed dispatch-miss seed: WaitForVBlank+0x1C"
+
+[[extra_func]]
+addr = 0x080008CA
+mode = "thumb"
+resume = true
+name = "resume_080008ca"
+note = "reviewed dispatch-miss seed: WaitForVBlank+0x1E"
+
+[[extra_func]]
+addr = 0x080008CC
+mode = "thumb"
+resume = true
+name = "resume_080008cc"
+note = "reviewed dispatch-miss seed: WaitForVBlank+0x20"
+
+[[extra_func]]
+addr = 0x080008CE
+mode = "thumb"
+resume = true
+name = "resume_080008ce"
+note = "reviewed dispatch-miss seed: WaitForVBlank+0x22"
+
+[[extra_func]]
+addr = 0x08000A00
+mode = "thumb"
+resume = true
+name = "resume_08000a00"
+note = "reviewed dispatch-miss seed: AllocInternal+0x48"
+
+[[extra_func]]
+addr = 0x080013CA
+mode = "thumb"
+resume = true
+name = "resume_080013ca"
+note = "reviewed dispatch-miss seed: SetBgControlAttributes+0x4A"
+
+[[extra_func]]
+addr = 0x0800184E
+mode = "thumb"
+resume = true
+name = "resume_0800184e"
+note = "reviewed dispatch-miss seed: InitBgsFromTemplates+0x66"
+
+[[extra_func]]
+addr = 0x08001ADE
+mode = "thumb"
+resume = true
+name = "resume_08001ade"
+note = "reviewed dispatch-miss seed: IsDma3ManagerBusyWithBgCopy+0xA"
+
+[[extra_func]]
+addr = 0x08001AE8
+mode = "thumb"
+resume = true
+name = "resume_08001ae8"
+note = "reviewed dispatch-miss seed: IsDma3ManagerBusyWithBgCopy+0x14"
+
+[[extra_func]]
+addr = 0x08001AEA
+mode = "thumb"
+resume = true
+name = "resume_08001aea"
+note = "reviewed dispatch-miss seed: IsDma3ManagerBusyWithBgCopy+0x16"
+
+[[extra_func]]
+addr = 0x08001AF2
+mode = "thumb"
+resume = true
+name = "resume_08001af2"
+note = "reviewed dispatch-miss seed: IsDma3ManagerBusyWithBgCopy+0x1E"
+
+[[extra_func]]
+addr = 0x08001AFA
+mode = "thumb"
+resume = true
+name = "resume_08001afa"
+note = "reviewed dispatch-miss seed: IsDma3ManagerBusyWithBgCopy+0x26"
+
+[[extra_func]]
+addr = 0x08001AFC
+mode = "thumb"
+resume = true
+name = "resume_08001afc"
+note = "reviewed dispatch-miss seed: IsDma3ManagerBusyWithBgCopy+0x28"
+
+[[extra_func]]
+addr = 0x08001B2C
+mode = "thumb"
+resume = true
+name = "resume_08001b2c"
+note = "reviewed dispatch-miss seed: IsDma3ManagerBusyWithBgCopy+0x58"
+
+[[extra_func]]
+addr = 0x08002902
+mode = "thumb"
+resume = true
+name = "resume_08002902"
+note = "reviewed dispatch-miss seed: WriteSequenceToBgTilemapBuffer+0xC2"
+
+[[extra_func]]
+addr = 0x0800292E
+mode = "thumb"
+resume = true
+name = "resume_0800292e"
+note = "reviewed dispatch-miss seed: WriteSequenceToBgTilemapBuffer+0xEE"
+
+[[extra_func]]
+addr = 0x0800293C
+mode = "thumb"
+resume = true
+name = "resume_0800293c"
+note = "reviewed dispatch-miss seed: WriteSequenceToBgTilemapBuffer+0xFC"
+
+[[extra_func]]
+addr = 0x08002ABC
+mode = "thumb"
+resume = true
+name = "resume_08002abc"
+note = "reviewed dispatch-miss seed: GetTileMapIndexFromCoords+0x8"
+
+[[extra_func]]
+addr = 0x08002AF8
+mode = "thumb"
+resume = true
+name = "resume_08002af8"
+note = "reviewed dispatch-miss seed: CopyTileMapEntry+0xC"
+
+[[extra_func]]
+addr = 0x08002B06
+mode = "thumb"
+resume = true
+name = "resume_08002b06"
+note = "reviewed dispatch-miss seed: CopyTileMapEntry+0x1A"
+
+[[extra_func]]
+addr = 0x08002B46
+mode = "thumb"
+resume = true
+name = "resume_08002b46"
+note = "reviewed dispatch-miss seed: CopyTileMapEntry+0x5A"
+
+[[extra_func]]
+addr = 0x08002E84
+mode = "thumb"
+resume = true
+name = "resume_08002e84"
+note = "reviewed dispatch-miss seed: FillBitmapRect4Bit+0x84"
+
+[[extra_func]]
+addr = 0x08002E8C
+mode = "thumb"
+resume = true
+name = "resume_08002e8c"
+note = "reviewed dispatch-miss seed: FillBitmapRect4Bit+0x8C"
+
+[[extra_func]]
+addr = 0x08002EAC
+mode = "thumb"
+resume = true
+name = "resume_08002eac"
+note = "reviewed dispatch-miss seed: FillBitmapRect4Bit+0xAC"
+
+[[extra_func]]
+addr = 0x080032B6
+mode = "thumb"
+resume = true
+name = "resume_080032b6"
+note = "reviewed dispatch-miss seed: InitWindows+0xF6"
+
+[[extra_func]]
+addr = 0x0800482E
+mode = "thumb"
+resume = true
+name = "resume_0800482e"
+note = "reviewed dispatch-miss seed: RenderFont+0x16"
+
+[[extra_func]]
+addr = 0x08004D3A
+mode = "thumb"
+resume = true
+name = "resume_08004d3a"
+note = "reviewed dispatch-miss seed: DecompressGlyphTile+0x12A"
+
+[[extra_func]]
+addr = 0x08004E9C
+mode = "thumb"
+resume = true
+name = "resume_08004e9c"
+note = "reviewed dispatch-miss seed: CopyGlyphToWindow+0xFC"
+
+[[extra_func]]
+addr = 0x08004ED6
+mode = "thumb"
+resume = true
+name = "resume_08004ed6"
+note = "reviewed dispatch-miss seed: CopyGlyphToWindow+0x136"
+
+[[extra_func]]
+addr = 0x08004EE6
+mode = "thumb"
+resume = true
+name = "resume_08004ee6"
+note = "reviewed dispatch-miss seed: CopyGlyphToWindow+0x146"
+
+[[extra_func]]
+addr = 0x08004EEE
+mode = "thumb"
+resume = true
+name = "resume_08004eee"
+note = "reviewed dispatch-miss seed: CopyGlyphToWindow+0x14E"
+
+[[extra_func]]
+addr = 0x08004EF0
+mode = "thumb"
+resume = true
+name = "resume_08004ef0"
+note = "reviewed dispatch-miss seed: CopyGlyphToWindow+0x150"
+
+[[extra_func]]
+addr = 0x08004F40
+mode = "thumb"
+resume = true
+name = "resume_08004f40"
+note = "reviewed dispatch-miss seed: CopyGlyphToWindow+0x1A0"
+
+[[extra_func]]
+addr = 0x08005C14
+mode = "thumb"
+resume = true
+name = "resume_08005c14"
+note = "reviewed dispatch-miss seed: RenderText+0x460"
+
+[[extra_func]]
+addr = 0x08006C1A
+mode = "thumb"
+resume = true
+name = "resume_08006c1a"
+note = "reviewed dispatch-miss seed: SortSprites+0xBE"
+
+[[extra_func]]
+addr = 0x0800716A
+mode = "thumb"
+resume = true
+name = "resume_0800716a"
+note = "reviewed dispatch-miss seed: ResetOamRange+0x1A"
+
+[[extra_func]]
+addr = 0x080072CE
+mode = "thumb"
+resume = true
+name = "resume_080072ce"
+note = "reviewed dispatch-miss seed: AllocSpriteTiles+0x32"
+
+[[extra_func]]
+addr = 0x080072D2
+mode = "thumb"
+resume = true
+name = "resume_080072d2"
+note = "reviewed dispatch-miss seed: AllocSpriteTiles+0x36"
+
+[[extra_func]]
+addr = 0x08007598
+mode = "thumb"
+resume = true
+name = "resume_08007598"
+note = "reviewed dispatch-miss seed: ResetAllSprites+0xC"
+
+[[extra_func]]
+addr = 0x08007654
+mode = "thumb"
+resume = true
+name = "resume_08007654"
+note = "reviewed dispatch-miss seed: AnimateSprite+0x14"
+
+[[extra_func]]
+addr = 0x0800767A
+mode = "thumb"
+resume = true
+name = "resume_0800767a"
+note = "reviewed dispatch-miss seed: AnimateSprite+0x3A"
+
+[[extra_func]]
+addr = 0x0800769E
+mode = "thumb"
+resume = true
+name = "resume_0800769e"
+note = "reviewed dispatch-miss seed: BeginAnim+0x16"
+
+[[extra_func]]
+addr = 0x08007808
+mode = "thumb"
+resume = true
+name = "resume_08007808"
+note = "reviewed dispatch-miss seed: ContinueAnim+0x90"
+
+[[extra_func]]
+addr = 0x08067A80
+mode = "thumb"
+resume = true
+name = "resume_08067a80"
+note = "reviewed dispatch-miss seed: ZeroBoxMonData+0xC"
+
+[[extra_func]]
+addr = 0x08068CC8
+mode = "thumb"
+resume = true
+name = "resume_08068cc8"
+note = "reviewed dispatch-miss seed: CalculateBoxMonChecksum+0x50"
+
+[[extra_func]]
+addr = 0x0806F996
+mode = "thumb"
+resume = true
+name = "resume_0806f996"
+note = "reviewed dispatch-miss seed: BlendPalette+0xA"
+
+[[extra_func]]
+addr = 0x08085EE6
+mode = "thumb"
+resume = true
+name = "resume_08085ee6"
+note = "reviewed dispatch-miss seed: RunFieldCallback+0x46"
+
+[[extra_func]]
+addr = 0x0808A048
+mode = "thumb"
+resume = true
+name = "resume_0808a048"
+note = "reviewed dispatch-miss seed: DrawMetatile+0xD0"
+
+[[extra_func]]
+addr = 0x0808A064
+mode = "thumb"
+resume = true
+name = "resume_0808a064"
+note = "reviewed dispatch-miss seed: DrawMetatile+0xEC"
+
+[[extra_func]]
+addr = 0x0808A13C
+mode = "thumb"
+resume = true
+name = "resume_0808a13c"
+note = "reviewed dispatch-miss seed: InitCameraUpdateCallback+0x8"
+
+[[extra_func]]
+addr = 0x08001AEC
+mode = "thumb"
+resume = true
+name = "resume_08001aec"
+note = "reviewed strict-attract dispatch miss inside host 0x08001AE4"
+
+[[extra_func]]
+addr = 0x08001AFE
+mode = "thumb"
+resume = true
+name = "resume_08001afe"
+note = "reviewed strict-attract dispatch miss inside host 0x08001AE4"
+
+[[extra_func]]
+addr = 0x080028FA
+mode = "thumb"
+resume = true
+name = "resume_080028fa"
+note = "reviewed strict-attract dispatch miss inside host 0x080028F6"
+
+[[extra_func]]
+addr = 0x08002908
+mode = "thumb"
+resume = true
+name = "resume_08002908"
+note = "reviewed strict-attract dispatch miss inside host 0x08002906"
+
+[[extra_func]]
+addr = 0x08002AC4
+mode = "thumb"
+resume = true
+name = "resume_08002ac4"
+note = "reviewed strict-attract dispatch miss inside host 0x08002AB4"
+
+[[extra_func]]
+addr = 0x08002AEE
+mode = "thumb"
+resume = true
+name = "resume_08002aee"
+note = "reviewed strict-attract dispatch miss inside host 0x08002AEC"
+
+[[extra_func]]
+addr = 0x08002B40
+mode = "thumb"
+resume = true
+name = "resume_08002b40"
+note = "reviewed strict-attract dispatch miss inside host 0x08002B3C"
+
+[[extra_func]]
+addr = 0x08002D8E
+mode = "thumb"
+resume = true
+name = "resume_08002d8e"
+note = "reviewed strict-attract dispatch miss inside host 0x08002D84"
+
+[[extra_func]]
+addr = 0x08002D98
+mode = "thumb"
+resume = true
+name = "resume_08002d98"
+note = "reviewed strict-attract dispatch miss inside host 0x08002D84"
+
+[[extra_func]]
+addr = 0x08002DA2
+mode = "thumb"
+resume = true
+name = "resume_08002da2"
+note = "reviewed strict-attract dispatch miss inside host 0x08002D84"
+
+[[extra_func]]
+addr = 0x08002DB6
+mode = "thumb"
+resume = true
+name = "resume_08002db6"
+note = "reviewed strict-attract dispatch miss inside host 0x08002D84"
+
+[[extra_func]]
+addr = 0x08002DBA
+mode = "thumb"
+resume = true
+name = "resume_08002dba"
+note = "reviewed strict-attract dispatch miss inside host 0x08002D84"
+
+[[extra_func]]
+addr = 0x08002DE2
+mode = "thumb"
+resume = true
+name = "resume_08002de2"
+note = "reviewed strict-attract dispatch miss inside host 0x08002DDC"
+
+[[extra_func]]
+addr = 0x08002E80
+mode = "thumb"
+resume = true
+name = "resume_08002e80"
+note = "reviewed strict-attract dispatch miss inside host 0x08002E78"
+
+[[extra_func]]
+addr = 0x08004D02
+mode = "thumb"
+resume = true
+name = "resume_08004d02"
+note = "reviewed strict-attract dispatch miss inside host 0x08004C10"
+
+[[extra_func]]
+addr = 0x08004D10
+mode = "thumb"
+resume = true
+name = "resume_08004d10"
+note = "reviewed strict-attract dispatch miss inside host 0x08004C10"
+
+[[extra_func]]
+addr = 0x08004EC6
+mode = "thumb"
+resume = true
+name = "resume_08004ec6"
+note = "reviewed strict-attract dispatch miss inside host 0x08004EA8"
+
+[[extra_func]]
+addr = 0x08004ED4
+mode = "thumb"
+resume = true
+name = "resume_08004ed4"
+note = "reviewed strict-attract dispatch miss inside host 0x08004ECC"
+
+[[extra_func]]
+addr = 0x08004ED8
+mode = "thumb"
+resume = true
+name = "resume_08004ed8"
+note = "reviewed strict-attract dispatch miss inside host 0x08004ECC"
+
+[[extra_func]]
+addr = 0x08004EDC
+mode = "thumb"
+resume = true
+name = "resume_08004edc"
+note = "reviewed strict-attract dispatch miss inside host 0x08004ECC"
+
+[[extra_func]]
+addr = 0x08004EF2
+mode = "thumb"
+resume = true
+name = "resume_08004ef2"
+note = "reviewed strict-attract dispatch miss inside host 0x08004ECC"
+
+[[extra_func]]
+addr = 0x08004EFA
+mode = "thumb"
+resume = true
+name = "resume_08004efa"
+note = "reviewed strict-attract dispatch miss inside host 0x08004ECC"
+
+[[extra_func]]
+addr = 0x08004F46
+mode = "thumb"
+resume = true
+name = "resume_08004f46"
+note = "reviewed strict-attract dispatch miss inside host 0x08004F28"
+
+[[extra_func]]
+addr = 0x080072D0
+mode = "thumb"
+resume = true
+name = "resume_080072d0"
+note = "reviewed strict-attract dispatch miss inside host 0x080072BE"
+
+[[extra_func]]
+addr = 0x080072D6
+mode = "thumb"
+resume = true
+name = "resume_080072d6"
+note = "reviewed strict-attract dispatch miss inside host 0x080072BE"
+
+[[extra_func]]
+addr = 0x0800738A
+mode = "thumb"
+resume = true
+name = "resume_0800738a"
+note = "reviewed strict-attract dispatch miss inside host 0x08007386"
+
+[[extra_func]]
+addr = 0x0800738C
+mode = "thumb"
+resume = true
+name = "resume_0800738c"
+note = "reviewed strict-attract dispatch miss inside host 0x08007386"
+
+[[extra_func]]
+addr = 0x08008D3E
+mode = "thumb"
+resume = true
+name = "resume_08008d3e"
+note = "reviewed strict-attract dispatch miss inside host 0x08008D2E"
+
+[[extra_func]]
+addr = 0x08086820
+mode = "thumb"
+resume = true
+name = "resume_08086820"
+note = "reviewed strict-attract dispatch miss inside host 0x08086816"
+
+[[extra_func]]
+addr = 0x0808824C
+mode = "thumb"
+resume = true
+name = "resume_0808824c"
+note = "reviewed strict-attract dispatch miss inside host 0x08088224"
+
+[[extra_func]]
+addr = 0x0808824E
+mode = "thumb"
+resume = true
+name = "resume_0808824e"
+note = "reviewed strict-attract dispatch miss inside host 0x08088224"
+
+[[extra_func]]
+addr = 0x08089C96
+mode = "thumb"
+resume = true
+name = "resume_08089c96"
+note = "reviewed strict-attract dispatch miss inside host 0x08089C92"
+
+[[extra_func]]
+addr = 0x08089F3A
+mode = "thumb"
+resume = true
+name = "resume_08089f3a"
+note = "reviewed strict-attract dispatch miss inside host 0x08089F38"
+
+[[extra_func]]
+addr = 0x080D6560
+mode = "thumb"
+resume = true
+name = "resume_080d6560"
+note = "reviewed strict-attract dispatch miss inside host 0x080D6554"
+
+[[extra_func]]
+addr = 0x080D6F5A
+mode = "thumb"
+resume = true
+name = "resume_080d6f5a"
+note = "reviewed strict-attract dispatch miss inside host 0x080D6F58"
+
+[[extra_func]]
+addr = 0x080D6F5C
+mode = "thumb"
+resume = true
+name = "resume_080d6f5c"
+note = "reviewed strict-attract dispatch miss inside host 0x080D6F58"
+
+[[extra_func]]
+addr = 0x080D6FCA
+mode = "thumb"
+resume = true
+name = "resume_080d6fca"
+note = "reviewed strict-attract dispatch miss inside host 0x080D6FC0"
+
+[[extra_func]]
+addr = 0x080D6FD4
+mode = "thumb"
+resume = true
+name = "resume_080d6fd4"
+note = "reviewed strict-attract dispatch miss inside host 0x080D6FCE"
+
+[[extra_func]]
+addr = 0x080D7012
+mode = "thumb"
+resume = true
+name = "resume_080d7012"
+note = "reviewed strict-attract dispatch miss inside host 0x080D7008"
+
+[[extra_func]]
+addr = 0x08152EF2
+mode = "thumb"
+resume = true
+name = "resume_08152ef2"
+note = "reviewed strict-attract dispatch miss inside host 0x08152EEE"
+
+[[extra_func]]
+addr = 0x0819A31C
+mode = "thumb"
+resume = true
+name = "resume_0819a31c"
+note = "reviewed strict-attract dispatch miss inside host 0x0819A2F8"
+
+[[extra_func]]
+addr = 0x082E18B6
+mode = "thumb"
+resume = true
+name = "resume_082e18b6"
+note = "reviewed strict-attract dispatch miss inside host 0x082E18B4"
+
+[[extra_func]]
+addr = 0x082E18BA
+mode = "thumb"
+resume = true
+name = "resume_082e18ba"
+note = "reviewed strict-attract dispatch miss inside host 0x082E18B8"
+
+[[extra_func]]
+addr = 0x082E18BC
+mode = "thumb"
+resume = true
+name = "resume_082e18bc"
+note = "reviewed strict-attract dispatch miss inside host 0x082E18B8"
+
+[[extra_func]]
+addr = 0x082E18C0
+mode = "thumb"
+resume = true
+name = "resume_082e18c0"
+note = "reviewed instruction-boundary resume inside host 0x082E18B8"
+
+[[extra_func]]
+addr = 0x082E18C2
+mode = "thumb"
+resume = true
+name = "resume_082e18c2"
+note = "reviewed instruction-boundary resume inside host 0x082E18B8"
+
+[[extra_func]]
+addr = 0x082E18C4
+mode = "thumb"
+resume = true
+name = "resume_082e18c4"
+note = "reviewed instruction-boundary resume inside host 0x082E18B8"
+
+[[extra_func]]
+addr = 0x082E190C
+mode = "thumb"
+resume = true
+name = "resume_082e190c"
+note = "reviewed strict-attract dispatch miss inside host 0x082E1908"
+
+[[extra_func]]
+addr = 0x082E1906
+mode = "thumb"
+resume = true
+name = "resume_082e1906"
+note = "reviewed strict-attract dispatch miss inside host 0x082E1904"
+
+[[extra_func]]
+addr = 0x082E190A
+mode = "thumb"
+resume = true
+name = "resume_082e190a"
+note = "reviewed instruction-boundary resume inside host 0x082E1908"
+
+[[extra_func]]
+addr = 0x082E1910
+mode = "thumb"
+resume = true
+name = "resume_082e1910"
+note = "reviewed instruction-boundary resume inside host 0x082E1908"
+
+[[extra_func]]
+addr = 0x082E1912
+mode = "thumb"
+resume = true
+name = "resume_082e1912"
+note = "reviewed instruction-boundary resume inside host 0x082E1908"
+
+[[extra_func]]
+addr = 0x082E1914
+mode = "thumb"
+resume = true
+name = "resume_082e1914"
+note = "reviewed instruction-boundary resume inside host 0x082E1908"
+
+[[extra_func]]
+addr = 0x082E1916
+mode = "thumb"
+resume = true
+name = "resume_082e1916"
+note = "reviewed instruction-boundary resume inside host 0x082E1908"
+
+[[extra_func]]
+addr = 0x082E1918
+mode = "thumb"
+resume = true
+name = "resume_082e1918"
+note = "reviewed instruction-boundary resume inside host 0x082E1908"
+
+# Reviewed generated hosts that receive asynchronous frame/IRQ resumes during
+# the Emerald attract path. Cover each bounded host rather than depending on
+# the exact interrupt timing observed in one run.
+
+[[extra_func]]
+addr = 0x082E00C0
+mode = "thumb"
+resume = true
+name = "resume_082e00c0"
+note = "reviewed dispatch-miss seed: m4aSoundInit+0x50"
+
+[[extra_func]]
+addr = 0x082E0790
+mode = "thumb"
+resume = true
+name = "resume_082e0790"
+note = "reviewed dispatch-miss seed: m4aSoundVSyncOff+0x2C"
+
+[[extra_func]]
+addr = 0x082E0792
+mode = "thumb"
+resume = true
+name = "resume_082e0792"
+note = "reviewed dispatch-miss seed: m4aSoundVSyncOff+0x2E"
+
+[[extra_func]]
+addr = 0x082E18BE
+mode = "thumb"
+resume = true
+name = "resume_082e18be"
+note = "reviewed dispatch-miss seed: ReadFlashId+0x3E"
+
+[[extra_func]]
+addr = 0x082E190E
+mode = "thumb"
+resume = true
+name = "resume_082e190e"
+note = "reviewed dispatch-miss seed: ReadFlashId+0x8E"
+
+[[extra_func]]
+addr = 0x082E6DCE
+mode = "thumb"
+resume = true
+name = "resume_082e6dce"
+note = "reviewed dispatch-miss seed: AgbRFU_checkID+0x62"
+
+[[extra_func]]
+addr = 0x082E6DD0
+mode = "thumb"
+resume = true
+name = "resume_082e6dd0"
+note = "reviewed dispatch-miss seed: AgbRFU_checkID+0x64"
+
+[[extra_func]]
+addr = 0x082E7560
+mode = "thumb"
+resume = true
+name = "resume_082e7560"
+note = "reviewed dispatch-miss seed: __divsi3+0x20"
+
+[[extra_func]]
+addr = 0x082E7BF8
+mode = "thumb"
+resume = true
+name = "resume_082e7bf8"
+note = "reviewed dispatch-miss seed: __umodsi3+0x18"
+
+[[extra_func]]
+addr = 0x082E93F0
+mode = "thumb"
+resume = true
+name = "resume_082e93f0"
+note = "reviewed dispatch-miss seed: memcpy+0x1C"
+
+[[extra_func]]
+addr = 0x082E93F2
+mode = "thumb"
+resume = true
+name = "resume_082e93f2"
+note = "reviewed dispatch-miss seed: memcpy+0x1E"
+
+[[extra_func]]
+addr = 0x082E93F4
+mode = "thumb"
+resume = true
+name = "resume_082e93f4"
+note = "reviewed dispatch-miss seed: memcpy+0x20"
+
+[[extra_func]]
+addr = 0x082E93F6
+mode = "thumb"
+resume = true
+name = "resume_082e93f6"
+note = "reviewed dispatch-miss seed: memcpy+0x22"
+
+[[extra_func]]
+addr = 0x082E93F8
+mode = "thumb"
+resume = true
+name = "resume_082e93f8"
+note = "reviewed dispatch-miss seed: memcpy+0x24"
+
+[[extra_func]]
+addr = 0x082E93FA
+mode = "thumb"
+resume = true
+name = "resume_082e93fa"
+note = "reviewed dispatch-miss seed: memcpy+0x26"
+
+[[extra_func]]
+addr = 0x082E93FC
+mode = "thumb"
+resume = true
+name = "resume_082e93fc"
+note = "reviewed dispatch-miss seed: memcpy+0x28"
+
+[[extra_func]]
+addr = 0x082E93FE
+mode = "thumb"
+resume = true
+name = "resume_082e93fe"
+note = "reviewed dispatch-miss seed: memcpy+0x2A"
