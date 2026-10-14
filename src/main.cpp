@@ -1,6 +1,7 @@
 // MOTHER 3 recomp runner — desktop and Android entry points.
 
 #include <algorithm>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -8,6 +9,7 @@
 #include <vector>
 
 #include "runtime.h"
+#include "runtime_arm.h"
 #include "mobile_platform.h"
 
 #ifndef GBARECOMP_BUILTIN_NAME
@@ -40,6 +42,62 @@
 #endif
 
 namespace {
+
+// MOTHER 3's FLASH512_V131 library runs its flash-reading routines from a
+// buffer on the stack (code that reads flash may not run from the cartridge
+// bus), copying them there on every call:
+//   ReadFlash1       0x080911D4, 4 bytes (ldrb r0,[r0]; bx lr), copied by
+//                    0x080911D8 and called through the pointer at 0x02015E14
+//                    by the write/erase status polls, thousands of times per save
+//   ReadFlash_Core   0x08091218, 0x24 bytes, copied by 0x0809123C
+//   VerifyFlash_Core 0x080912D8, 0x30 bytes, copied by 0x0809130A, 0x080913A2
+// The slot moves with the call depth and is reused for other data, so fixed
+// RAM entries would be unsafe, and every call ran on the interpreter bridge,
+// as did every IRQ return into a loop (the library times flash operations
+// with a timer IRQ): ~20 PCs at 0x03006C1C..0x03006D80 and about a million
+// interpreted instructions per save. The routines are position independent,
+// so a RAM PC inside a byte-exact copy runs the static translation of the ROM
+// routine at the same offset (static_resume_all gives every instruction an
+// entry). ReadFlash1 is too short to identify by its bytes alone and must
+// also be the copy the library's pointer names. Anything else falls through
+// to normal dispatch. Same idea as EmeraldRecomp's ReadFlash1/ReadFlash_Core
+// hook, plus mid-routine resumes.
+struct StackRoutine {
+    uint32_t rom;
+    uint32_t size;
+    uint32_t live_pointer;  // holds (copy | 1) while the copy is live; 0 = none
+};
+constexpr StackRoutine kFlashStackRoutines[] = {
+    {0x080911D4u, 0x04u, 0x02015E14u},  // ReadFlash1
+    {0x08091218u, 0x24u, 0u},           // ReadFlash_Core
+    {0x080912D8u, 0x30u, 0u},           // VerifyFlash_Core
+};
+
+bool ram_matches_rom(uint32_t ram, uint32_t rom, uint32_t size) {
+    for (uint32_t i = 0; i < size; i += 2) {
+        if (bus_read_u16(ram + i) != bus_read_u16(rom + i)) return false;
+    }
+    return true;
+}
+
+int mother3_ram_dispatch(uint32_t pc, int thumb) {
+    pc &= ~1u;
+    if (!thumb || pc < 0x03000000u || pc >= 0x03008000u) return 0;
+    const uint16_t opcode = bus_read_u16(pc);
+    for (const StackRoutine& routine : kFlashStackRoutines) {
+        for (uint32_t offset = 0; offset < routine.size; offset += 2) {
+            const uint32_t copy = pc - offset;
+            if (opcode != bus_read_u16(routine.rom + offset) ||
+                (routine.live_pointer &&
+                 bus_read_u32(routine.live_pointer) != (copy | 1u)) ||
+                !ram_matches_rom(copy, routine.rom, routine.size))
+                continue;
+            runtime_dispatch(routine.rom + offset);
+            return 1;
+        }
+    }
+    return 0;
+}
 
 void print_usage() {
     std::printf(
@@ -120,6 +178,11 @@ int mother3_main(int argc, char** argv) {
     // Android has its own ROM/BIOS setup Activity, so the desktop pre-boot
     // launcher must not be shown there.
     if (!on_mobile && game_launcher_preboot(args, opts)) return 0;
+#endif
+
+#if !defined(MOTHER3_BOOTSTRAP_INTERP)
+    // Needs the generated corpus; bootstrap builds interpret everything.
+    g_runtime_ram_dispatch_hook = &mother3_ram_dispatch;
 #endif
 
     std::vector<char*> av;
