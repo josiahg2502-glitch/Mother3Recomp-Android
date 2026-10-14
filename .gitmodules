@@ -3,7 +3,7 @@
 	url = https://github.com/mstan/recomp-ui.git
 [submodule "gbarecomp"]
 	path = gbarecomp
-	url = https://github.com/agray0425/gbarecomp
+	url = https://github.com/mstan/gbarecomp
 [submodule "third_party/pokeemerald"]
 	path = third_party/pokeemerald
 	url = https://github.com/pret/pokeemerald

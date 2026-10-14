@@ -113,8 +113,14 @@ echo "Generating MOTHER 3 recompilation corpus..."
 )
 
 echo "Generating native BIOS corpus..."
+# The engine's BIOS config is required: without it only the vectors are
+# seeded, and the IRQ return (0x138), the SWI-handler resume points and the
+# resume ranges inside CpuSet/CpuFastSet/LZ77 are missing (666 dispatch
+# entries instead of 5143). Every IRQ then returns through the interpreter
+# bridge, which aborted MOTHER 3 a few minutes into a game and garbled VRAM.
 "$RECOMP" \
   --bios "$BIOS" \
+  --config "$ROOT/gbarecomp/bios/gba_bios.toml" \
   --out "$ROOT/gbarecomp/src/runtime/generated_bios"
 
 command -v gradle >/dev/null 2>&1 || {
