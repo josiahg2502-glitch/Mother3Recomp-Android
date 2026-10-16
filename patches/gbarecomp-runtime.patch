@@ -3550,7 +3550,7 @@ index 3ad68c1..e01ebe8 100644
  static inline uint32_t runtime_mrs_spsr(void) { return g_ovl->runtime_mrs_spsr(); }
  static inline void runtime_msr_cpsr(uint32_t v, uint32_t m) { g_ovl->runtime_msr_cpsr(v, m); }
 diff --git a/src/runtime/runtime.cpp b/src/runtime/runtime.cpp
-index c5de5ac..575a315 100644
+index c5de5ac..fc774fd 100644
 --- a/src/runtime/runtime.cpp
 +++ b/src/runtime/runtime.cpp
 @@ -20,6 +20,7 @@
@@ -3745,7 +3745,7 @@ index c5de5ac..575a315 100644
      if (const char* fi = std::getenv("GBARECOMP_FORCE_INTERP"))
          g_force_interp = (fi[0] && fi[0] != '0') ? 1 : 0;
 +    // Never dispatch a different translation through this build's native corpus.
-+    if (opts.allow_rom_sha1_mismatch && rom_sha1 != lower_ascii(args.rom_sha1) &&
++    if (opts.allow_rom_sha1_mismatch && rom_sha1 != lower_ascii(opts.builtin_rom_sha1 ? opts.builtin_rom_sha1 : args.rom_sha1) &&
 +        (alt_sha1.empty() || rom_sha1 != alt_sha1))
 +        g_force_interp = 1;
      std::fprintf(stderr, "cpu_backend=%s\n",
