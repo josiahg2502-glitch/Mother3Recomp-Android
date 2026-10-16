@@ -19,38 +19,35 @@ if (!english && !["jp", "jpn", "ja", "mother3"].contains(requested)) {
 }
 
 def variant = english ? "mother3en" : "mother3"
-def romFile = english ? "mother3_en.gba" : "mother3_jpn.gba"
-def romSha1 = english
-    ? "306fb8874533b0fd0796208faa8bed2db4ae77fb"
-    : "4f0f493e12c2a8c61b2d809af03f7abf87a85776"
-def title = english ? "MOTHER 3 (EN)" : "MOTHER 3"
-def androidToml = new File(rootDir,
-    english ? "game_android_mother3en.toml" : "game_android_mother3.toml")
+def romFile = english ? "mother3_en_v13.gba" : "mother3_jpn.gba"
+def romShas = [
+    "306fb8874533b0fd0796208faa8bed2db4ae77fb",
+    "4ffe71ce5c5e1e8d9be5fbd09968b60787169b21",
+    "b875a277921ac81c3e06c5d2db930e52975aecec",
+]
+def title = "MOTHER 3"
+def androidToml = providers.gradleProperty("gbaGameToml").orNull
+    ? file(providers.gradleProperty("gbaGameToml").get())
+    : new File(rootDir, english ? "game_android_mother3en.toml" : "game_android_mother3.toml")
 
 ext.gbaGame = [
-    applicationId  : english
-        ? "com.ylports.mother3recomp.en.dev"
-        : "com.ylports.mother3recomp.jpn.dev",
-    versionCode    : 2,
-    versionName    : "0.1.3-fast",
+    applicationId  : "com.ylports.mother3recomp.en.dev",
+    versionCode    : 106,
+    versionName    : "1.0.6",
     title          : title,
-    romLabel       : english
-        ? "MOTHER 3 English fan-translation ROM"
-        : "MOTHER 3 Japanese ROM",
-    romSha1        : [romSha1],
+    romLabel       : "MOTHER 3 ROM",
+    romSha1        : romShas,
+    romPatchSourceSha1: "4f0f493e12c2a8c61b2d809af03f7abf87a85776",
     romSize        : 33554432,
     romFile        : romFile,
-    biosRequired   : true,
+    biosRequired   : false,
     orientation    : "landscape",
-    payloadVersion : "1",
-    setupNote      : "Importa tu propia ROM compatible y un dump de GBA BIOS. " +
-                     "El APK público no incluye archivos de Nintendo.",
+    payloadVersion : "1.0.6",
+    setupNote      : "Choose a clean Japanese ROM and an IPS, IPS32, BPS, or UPS fan patch. " +
+                     "The Spanish translation is supported.",
     variant        : variant,
     gameToml       : androidToml,
-    payloadDirs    : [
-        [from: new File(gameRoot, "variants/${variant}/config"),
-         into: "variants/${variant}/config"],
-    ],
+    payloadDirs    : [],
     gameRoot       : gameRoot,
     engineRoot     : engineRoot,
     recompUiRoot   : recompUiRoot,

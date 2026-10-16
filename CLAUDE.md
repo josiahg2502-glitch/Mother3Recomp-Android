@@ -1,10 +1,9 @@
 # CLAUDE.md — Mother3Recomp
 
 Static recompilation of **MOTHER 3** (GBA) to native PC on the `gbarecomp`
-framework. Forked from EmeraldRecomp; the `emerald_*` sources, the Emerald
-variant and `third_party/pokeemerald` are inherited and are not MOTHER 3 code.
+framework. Unused Emerald game sources and release scaffolding have been removed.
 
-Platform rules live in the engine submodule (checked out at `./gbarecomp`):
+Platform rules live in the pinned engine checkout at `./gbarecomp`:
 
 - `gbarecomp/CLAUDE.md`     — execution contract
 - `gbarecomp/PRINCIPLES.md` — recomp principles
@@ -26,7 +25,7 @@ moved or added code, expect self-heal misses rather than symbol hits.
 
 Build with MSYS2 mingw64 + Ninja, invoked from **PowerShell** (the Bash
 sandbox forces `TEMP=C:\Windows`, which breaks `cc1plus`). CMake defaults
-`GBARECOMP_ROOT` to the `./gbarecomp` submodule; override with
+`GBARECOMP_ROOT` to `./gbarecomp`; run `python tools/setup_deps.py` first. Override with
 `-DGBARECOMP_ROOT=...` only if your layout differs.
 
 ```
@@ -56,10 +55,7 @@ regenerate `variants/<v>/generated/` and the long full compile.
    delay matters more than input. Audio knobs (env): `GBARECOMP_AUDIO_TARGET_MS`
    (default 32), `GBARECOMP_AUDIO_SAMPLES` (512), `GBARECOMP_AUDIO_PREROLL_MS` (0).
    Check `GBARECOMP_AUDIO_PROBE=1` for bridge underruns after changing them.
-2. **Widescreen** — follow the Emerald pattern (`src/emerald_*_view.cpp`,
-   `docs/WIDESCREEN_EXPERIMENT.md`): read live map/camera/object state and feed
-   the expanded PPU; never change guest spawn/AI logic. Overworld first;
-   battles stay centered until handled separately.
+2. **Display** — use the native viewport. Android stretch, system bars and touch visibility are independent settings. Expanded scenery requires a validated MOTHER 3 scene provider before it is exposed.
 3. **Moddability** — replace guest functions through `[[mod_function_hook]]`
    + `gbarecomp/src/runtime/mod_function_hooks.h`, not by editing generated C.
 

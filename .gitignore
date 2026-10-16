@@ -111,3 +111,14 @@ variants/*/generated.bak/
 # Android/Gradle local output
 android/.gradle/
 android/local.properties
+
+# Local dependencies, graph cache and Android outputs
+/gbarecomp/
+/recomp-ui/
+/graphify-out/
+android/build/
+android/app/build/
+android/app/.cxx/
+*.p12
+*.keystore
+*-keystore.b64

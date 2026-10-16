@@ -81,11 +81,7 @@ ACTUAL_BIOS_SHA="$(sha1_file "$BIOS")"
 }
 
 cd "$ROOT"
-git submodule update --init gbarecomp recomp-ui
-git -C gbarecomp config submodule.external/arm-recomp-core.url \
-  https://github.com/mstan/arm-recomp-core.git
-git -C gbarecomp submodule update --init \
-  external/arm-recomp-core platform/android/third_party/SDL
+python3 tools/setup_deps.py
 
 HOST_BUILD="$ROOT/build-android-host"
 cmake -S "$ROOT" -B "$HOST_BUILD" -G Ninja -DGBAGAME_RECOMP_UI=OFF

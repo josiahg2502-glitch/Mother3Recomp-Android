@@ -1,14 +1,22 @@
-// MOTHER 3 recomp runner — desktop and Android entry points.
+// MOTHER 3 recomp runner â€” desktop and Android entry points.
 
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <string>
 #include <vector>
 
 #include "runtime.h"
 #include "mobile_platform.h"
+#if defined(MOTHER3_EN_RUNTIME_HOOKS)
+#include "mother3_runtime_hooks.h"
+#endif
+#if defined(__ANDROID__)
+#include "../recomp-ui/src/common/ips_patch.h"
+#include <jni.h>
+#endif
 
 #ifndef GBARECOMP_BUILTIN_NAME
 #define GBARECOMP_BUILTIN_NAME "MOTHER 3"
@@ -80,34 +88,36 @@ int mother3_main(int argc, char** argv) {
 #endif
 
 #if defined(__ANDROID__) && defined(MOTHER3_BOOTSTRAP_INTERP)
-    // Public APKs intentionally omit ROM-derived generated C/C++. With no
-    // static cart dispatch table, drive the main guest CPU through gbarecomp's
-    // reference interpreter instead of entering runtime_dispatch() at PC=0.
-    // A private build that regenerated generated/dispatch_table.cpp does not
-    // define MOTHER3_BOOTSTRAP_INTERP and therefore uses the native recompiler.
+    // Android's interpreter build supports language patches that alter guest
+    // code, regardless of whether this checkout contains generated code.
     setenv("GBARECOMP_FORCE_INTERP", "1", 1);
 #endif
 
+#if defined(MOTHER3_EN_RUNTIME_HOOKS)
+    mother3_install_runtime_hooks();
+#endif
     gbarecomp::RunOptions opts;
     opts.builtin_game_name = GBARECOMP_BUILTIN_NAME;
     opts.builtin_rom_sha1 =
         (sizeof(GBARECOMP_BUILTIN_SHA1) > 1) ? GBARECOMP_BUILTIN_SHA1 : nullptr;
     opts.builtin_rom_crc32 = GBARECOMP_BUILTIN_CRC32;
+#if defined(MOTHER3_EN_RUNTIME_HOOKS)
+    opts.alt_rom_sha1 = "4ffe71ce5c5e1e8d9be5fbd09968b60787169b21";
+#endif
     opts.launcher_region =
         (sizeof(GBARECOMP_BUILTIN_REGION) > 1) ? GBARECOMP_BUILTIN_REGION : nullptr;
     opts.launcher_boxart =
         (sizeof(GBARECOMP_BOXART) > 1) ? GBARECOMP_BOXART : nullptr;
     opts.launcher_game_config = GBARECOMP_DEFAULT_GAME_CONFIG;
 
-    // MOTHER 3 is currently rendered at the native GBA 240x160 logical view.
-    // Host scaling is handled by SDL without changing guest state.
+    // MOTHER 3 has no validated scenery provider beyond the native viewport.
     opts.max_view_width = 240;
     opts.max_resize_view_width = 240;
     opts.max_resize_view_height = 160;
-    opts.resize_driven_view = false;
     opts.freely_resizable_window = true;
     opts.launcher_expose_widescreen = false;
     opts.launcher_expose_adaptive_view = false;
+    opts.runtime_menu_scancode = 68;  // F11
 
     if (on_mobile) {
         opts.orientation = gbarecomp::RunOptions::Orientation::Landscape;
@@ -115,6 +125,12 @@ int mother3_main(int argc, char** argv) {
         opts.ui_touch_friendly = true;
         opts.touch_pad_default = 1;
     }
+
+#if defined(__ANDROID__)
+    // Android validates imported ROMs in the setup Activity. Patches can change
+    // the target hash; the runtime selects the interpreter for mismatched ROMs.
+    opts.allow_rom_sha1_mismatch = true;
+#endif
 
 #if defined(GBAGAME_RECOMP_UI)
     // Android has its own ROM/BIOS setup Activity, so the desktop pre-boot
@@ -131,10 +147,48 @@ int mother3_main(int argc, char** argv) {
 }  // namespace
 
 #if defined(__ANDROID__)
+extern "C" JNIEXPORT jbyteArray JNICALL
+Java_org_gbarecomp_GbaNative_applyRomPatch(JNIEnv* env, jclass, jbyteArray source,
+                                           jbyteArray patch) {
+    if (!source || !patch) return nullptr;
+    const jsize source_size = env->GetArrayLength(source);
+    const jsize patch_size = env->GetArrayLength(patch);
+    std::vector<uint8_t> source_bytes(static_cast<size_t>(source_size));
+    std::vector<uint8_t> patch_bytes(static_cast<size_t>(patch_size));
+    env->GetByteArrayRegion(source, 0, source_size,
+                            reinterpret_cast<jbyte*>(source_bytes.data()));
+    env->GetByteArrayRegion(patch, 0, patch_size,
+                            reinterpret_cast<jbyte*>(patch_bytes.data()));
+    if (env->ExceptionCheck()) return nullptr;
+
+    uint8_t* output = nullptr;
+    size_t output_size = 0;
+    if (!rom_patch_apply(source_bytes.data(), source_bytes.size(),
+                         patch_bytes.data(), patch_bytes.size(),
+                         &output, &output_size)) return nullptr;
+    if (output_size > static_cast<size_t>(std::numeric_limits<jsize>::max())) {
+        std::free(output);
+        return nullptr;
+    }
+    jbyteArray result = env->NewByteArray(static_cast<jsize>(output_size));
+    if (result)
+        env->SetByteArrayRegion(result, 0, static_cast<jsize>(output_size),
+                                reinterpret_cast<const jbyte*>(output));
+    std::free(output);
+    return env->ExceptionCheck() ? nullptr : result;
+}
+#endif
+
+#if defined(__ANDROID__)
 extern "C" int SDL_main(int argc, char** argv) {
     // The recompiled corpus can consume a much deeper host stack than a normal
     // SDLActivity thread. gbarecomp creates a dedicated, large-stack game thread.
-    return gbarecomp::mobile_run_with_stack(mother3_main, argc, argv);
+    const int result = gbarecomp::mobile_run_with_stack(mother3_main, argc, argv);
+    if (std::FILE* status = std::fopen("android-exit-code", "w")) {
+        std::fprintf(status, "%d", result);
+        std::fclose(status);
+    }
+    return result;
 }
 #else
 int main(int argc, char** argv) {
