@@ -18,4 +18,4 @@ The setup screen accepts a Japanese source ROM and supported UPS/BPS/IPS transla
 
 Setup stays available on each launch. Failed native launches display diagnostics; successful or normal app exits do not automatically show the old log. A copy button includes device and version information for reports.
 
-See [candidate changes](docs/FIXES-1.0.6.md) and [historical README](docs/releases/legacy-readme.md). Real Snapdragon/Redmi performance and Android 15 startup still require device confirmation.
+See [candidate changes](docs/FIXES-1.0.6.md). Real Snapdragon/Redmi performance and Android 15 startup still require device confirmation.
