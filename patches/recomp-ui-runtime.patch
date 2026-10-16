@@ -1,0 +1,449 @@
+diff --git a/src/common/backends/imgui/launcher_imgui.cpp b/src/common/backends/imgui/launcher_imgui.cpp
+index cbae6e9..8597c2f 100644
+--- a/src/common/backends/imgui/launcher_imgui.cpp
++++ b/src/common/backends/imgui/launcher_imgui.cpp
+@@ -957,10 +957,6 @@ static void draw_standalone_builtin_rom_picker(LauncherModel* m,
+ // dashboard vs hug its content in the narrow stacked layout). Same pattern as
+ // the other per-frame context globals below (g_th, g_pads).
+ bool g_game_fill_h = false;
+-// Visible dashboard height, independent of scrolling or AutoResizeY content.
+-// Using a card's previous content height would keep hidden artwork from ever
+-// returning when the user makes the window larger again.
+-float g_game_visible_h = 0.0f;
+ // SAVE (memory-card) fill-height: multitap (3+) only — cards stretch in a
+ // reserved band under a scrolling controller stack. 2P hugs content; edge
+ // inset comes from Child WindowPadding (same top/bottom as other panels).
+@@ -2206,25 +2202,16 @@ void draw_game_panel(LauncherModel* m, const LauncherTheme& th, bool fill_h = fa
+         // Disc Selection label + combo + spacing, for a multi-image title.
+         if (launcher_model_disc_count(m) > 1) reserve += px(62.0f);
+         if (m->saves_supported) reserve += px(96.0f);    // compact SAVES row below Change ROM
+-        if (m->password_save_path || m->password_sram_path)
+-            reserve += px(96.0f);                      // password-save row (same footprint)
++        if (m->password_save_path) reserve += px(96.0f); // password-save row (same footprint)
+         if (m->bios_name && launcher_model_bios_missing(m)) reserve += px(110.0f);  // "required" notice
+         if (m->msu1_patch_available) reserve += px(198.0f);  // MSU-1 patch-available sub-block
+                                                               // (title + up-to-3-line wrapped note + 2 stacked buttons)
+-        if (builtin_file_picker_should_be_offered()) reserve += px(84.0f);
+-        if (m->setup_error[0])
+-            reserve += ImGui::CalcTextSize(m->setup_error, nullptr, false, availw).y
+-                       + ImGui::GetStyle().ItemSpacing.y;
+-        const float card_h = g_game_visible_h - ImGui::GetStyle().WindowPadding.y * 2.0f;
+-        float art_h = card_h - reserve;
++        float art_h = ImGui::GetContentRegionAvail().y - reserve;
+         if (art_h > px(368.0f)) art_h = px(368.0f);   // allow a larger hero box art (~15% bigger than before)
+-        // Artwork yields to controls. Below a useful thumbnail size, omit it
+-        // (and its spacer) instead of forcing the metadata below the fold.
+-        if (art_h >= px(96.0f)) {
+-            hero_boxart_centered(g_boxart, art_h, availw);
+-            ImGui::Dummy(ImVec2(0, px(10)));
+-        }
++        if (art_h < px(248.0f)) art_h = px(248.0f);   // keep it big enough to balance the side column
++        hero_boxart_centered(g_boxart, art_h, availw);
+     }
++    ImGui::Dummy(ImVec2(0, px(10)));
+ 
+     // Region + verification state, centered under the art.
+     const char* noun = (m->rom_noun && m->rom_noun[0]) ? m->rom_noun : "ROM";
+@@ -2241,6 +2228,12 @@ void draw_game_panel(LauncherModel* m, const LauncherTheme& th, bool fill_h = fa
+         state_mark(verified, th);
+         ImGui::SameLine(0, px(6));
+         ImGui::TextColored(verified ? col(th.good) : col(th.warn), "%s", line);
++        if (launcher_model_rom_needs_patch(m)) {
++            const char* hint = ui_text("Stock ROM: add its patch under ROM Patch");
++            const float hw = ImGui::CalcTextSize(hint).x;
++            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (availw - hw) * 0.5f);
++            ImGui::TextColored(col(th.warn), "%s", hint);
++        }
+     }
+     ImGui::Dummy(ImVec2(0, px(10)));
+ 
+@@ -3551,7 +3544,6 @@ void panel_controller_draw(LauncherModel* m, const LauncherTheme* th) {
+ // draw_save_row). A different system's profile simply contributes a
+ // different panel list.
+ void draw_dashboard(LauncherModel* m, const LauncherTheme& th, int logical_w) {
+-    g_game_visible_h = ImGui::GetWindowHeight();
+     const SystemProfile* prof = (const SystemProfile*)m->profile;
+     const LauncherPanel* game_p = find_composed(prof->panels_dashboard, "game", m);
+     const LauncherPanel* ctrl_p = find_composed(prof->panels_dashboard, "controller", m);
+@@ -11188,9 +11180,7 @@ void draw_netplay(LauncherModel* m, const LauncherTheme& th) {
+                 ImGui::TextColored(col(th.text_muted), "No");
+             ImGui::TableSetColumnIndex(3);
+             table_row_vcenter(lobby_row_h, text_h);
+-            if (row.latency_ms >= 0 && row.latency_is_estimate)
+-                ImGui::TextColored(col(th.text_muted), "~%d ms", row.latency_ms);
+-            else if (row.latency_ms >= 0)
++            if (row.latency_ms >= 0)
+                 ImGui::Text("%d ms", row.latency_ms);
+             else
+                 ImGui::TextColored(col(th.text_muted), "—");
+@@ -12352,7 +12342,7 @@ static void draw_rom_patch(LauncherModel* m, const LauncherTheme& th) {
+         ImGui::SameLine(ImGui::GetContentRegionAvail().x - browse_w - clear_w -
+                         px(8));
+         if (ImGui::Button(ui_text("Browse..."), ImVec2(browse_w, px(28)))) {
+-            ui_pick_file(m, "Select ROM patch", {"*.ips", "*.ips32", "*.bps"},
++            ui_pick_file(m, "Select ROM patch", {"*.ips", "*.ips32", "*.bps", "*.ups"},
+                          "ROM patches", [m](const char* path) {
+                              if (path) launcher_model_set_rom_patch(m, path);
+                          });
+@@ -14058,7 +14048,8 @@ void draw_ui(LauncherModel* m, const LauncherTheme& th, int logical_w, int logic
+         const float right = ImGui::GetWindowContentRegionMax().x;
+         const float y = hdr_top + px(6.0f);
+         if (m->view == LNG_VIEW_DASHBOARD) {
+-            const int count = 1 + (m->mods ? 1 : 0) +
++            const bool show_mods = m->mods || m->rom_patch_supported;
++            const int count = 1 + (show_mods ? 1 : 0) +
+                               (m->has_assist_tools ? 1 : 0) +
+                               ((m->credits_text && m->credits_text[0]) ? 1 : 0);
+             const float w = px(110.0f);
+@@ -14066,9 +14057,9 @@ void draw_ui(LauncherModel* m, const LauncherTheme& th, int logical_w, int logic
+             ImGui::SetCursorPos(ImVec2(right - total, y));
+             if (ImGui::Button(ui_text("Settings"), ImVec2(w, px(34))))
+                 launcher_model_set_view(m, LNG_VIEW_SETTINGS);
+-            if (m->mods) {
++            if (show_mods) {
+                 ImGui::SameLine(0, gap);
+-                if (ImGui::Button(ui_text("Mods"), ImVec2(w, px(34))))
++                if (ImGui::Button(ui_text(m->mods ? "Mods" : "ROM Patch"), ImVec2(w, px(34))))
+                     launcher_model_set_view(m, LNG_VIEW_MODS);
+             }
+             if (m->has_assist_tools) {
+diff --git a/src/common/ips_patch.c b/src/common/ips_patch.c
+index e25cb6c..3999377 100644
+--- a/src/common/ips_patch.c
++++ b/src/common/ips_patch.c
+@@ -30,6 +30,7 @@ IpsPatchFormat ips_detect_format(const uint8_t* patch, size_t patch_len) {
+     if (patch_len >= 5 && memcmp(patch, "PATCH", 5) == 0) return IPS_PATCH_CLASSIC;
+     if (patch_len >= 5 && memcmp(patch, "IPS32", 5) == 0) return IPS_PATCH_IPS32;
+     if (memcmp(patch, "BPS1", 4) == 0) return IPS_PATCH_BPS;
++    if (memcmp(patch, "UPS1", 4) == 0) return IPS_PATCH_UPS;
+     return IPS_PATCH_UNKNOWN;
+ }
+ 
+@@ -241,11 +242,62 @@ bool bps_apply(const uint8_t* src, size_t src_len,
+     return true;
+ }
+ 
++// UPS1: "UPS1", varint input size, varint output size, then records of
++// (varint skip, XOR bytes terminated by 0x00) up to a 12-byte CRC32 footer
++// (input, output, patch-without-final-crc). Varints share BPS's encoding.
++bool ups_apply(const uint8_t* src, size_t src_len,
++               const uint8_t* patch, size_t patch_len,
++               uint8_t** out_data, size_t* out_len) {
++    if (!out_data || !out_len || (src_len && !src) || !patch ||
++        patch_len < 4 + 2 + 12 || memcmp(patch, "UPS1", 4) != 0)
++        return false;
++    const size_t body_end = patch_len - 12;
++    const uint32_t expected_in_crc = bps_read_le32(patch + body_end);
++    const uint32_t expected_out_crc = bps_read_le32(patch + body_end + 4);
++    const uint32_t expected_patch_crc = bps_read_le32(patch + body_end + 8);
++    if (recompui_crc32_compute(patch, patch_len - 4) != expected_patch_crc)
++        return false;
++    size_t cursor = 4;
++    uint64_t in_size = 0, out_size = 0;
++    if (!bps_read_number(patch, body_end, &cursor, &in_size) ||
++        !bps_read_number(patch, body_end, &cursor, &out_size) ||
++        in_size != src_len || out_size > SIZE_MAX ||
++        recompui_crc32_compute(src, src_len) != expected_in_crc)
++        return false;
++    const size_t target_len = (size_t)out_size;
++    uint8_t* target = (uint8_t*)calloc(target_len ? target_len : 1, 1);
++    if (!target) return false;
++    memcpy(target, src, src_len < target_len ? src_len : target_len);
++    size_t pos = 0;
++    while (cursor < body_end) {
++        uint64_t skip = 0;
++        if (!bps_read_number(patch, body_end, &cursor, &skip) ||
++            skip > (uint64_t)(SIZE_MAX - pos)) { free(target); return false; }
++        pos += (size_t)skip;
++        for (;;) {
++            if (cursor >= body_end) { free(target); return false; }
++            const uint8_t x = patch[cursor++];
++            if (x == 0) { ++pos; break; }
++            if (pos >= target_len) { free(target); return false; }
++            target[pos++] ^= x;
++        }
++    }
++    if (recompui_crc32_compute(target, target_len) != expected_out_crc) {
++        free(target);
++        return false;
++    }
++    *out_data = target;
++    *out_len = target_len;
++    return true;
++}
++
+ bool rom_patch_apply(const uint8_t* src, size_t src_len,
+                      const uint8_t* patch, size_t patch_len,
+                      uint8_t** out_data, size_t* out_len) {
+     const IpsPatchFormat format = ips_detect_format(patch, patch_len);
+     if (format == IPS_PATCH_BPS)
+         return bps_apply(src, src_len, patch, patch_len, out_data, out_len);
++    if (format == IPS_PATCH_UPS)
++        return ups_apply(src, src_len, patch, patch_len, out_data, out_len);
+     return ips_apply(src, src_len, patch, patch_len, out_data, out_len);
+ }
+diff --git a/src/common/ips_patch.h b/src/common/ips_patch.h
+index 4052160..3d2e9c5 100644
+--- a/src/common/ips_patch.h
++++ b/src/common/ips_patch.h
+@@ -22,6 +22,7 @@ typedef enum IpsPatchFormat {
+     IPS_PATCH_CLASSIC,
+     IPS_PATCH_IPS32,
+     IPS_PATCH_BPS,
++    IPS_PATCH_UPS,
+ } IpsPatchFormat;
+ 
+ IpsPatchFormat ips_detect_format(const uint8_t* patch, size_t patch_len);
+@@ -49,7 +50,13 @@ bool bps_apply(const uint8_t* src, size_t src_len,
+                const uint8_t* patch, size_t patch_len,
+                uint8_t** out_data, size_t* out_len);
+ 
+-// Auto-detect and apply classic IPS, IPS32, or BPS1.
++// Apply a UPS1 (byuu) patch and verify all three CRC32s embedded in it. The
++// source size and checksum must match the patch's declared input exactly.
++bool ups_apply(const uint8_t* src, size_t src_len,
++               const uint8_t* patch, size_t patch_len,
++               uint8_t** out_data, size_t* out_len);
++
++// Auto-detect and apply classic IPS, IPS32, BPS1, or UPS1.
+ bool rom_patch_apply(const uint8_t* src, size_t src_len,
+                      const uint8_t* patch, size_t patch_len,
+                      uint8_t** out_data, size_t* out_len);
+diff --git a/src/common/launcher_binds.c b/src/common/launcher_binds.c
+index 2e2bf4b..77c0305 100644
+--- a/src/common/launcher_binds.c
++++ b/src/common/launcher_binds.c
+@@ -4,6 +4,7 @@
+ #include "launcher_sdlcompat.h"   // SDL header (2 or 3)
+ #include "keybinds.h"             // engine keyboard-binding store
+ #include "launcher_system.h"      // SystemProfile / ControllerSpec.button_count
++#include "consoles/gba/gba_pad_binds.h"
+ #include "pad_binds.h"            // shared per-GUID input.ini store (path rule)
+ #include "consoles/psx/psx_binds.h"   // PSX-native keybind bridge (psx_keybinds.c format)
+ #include "consoles/psx/psx_pad_binds.h" // PSX gamepad input.ini per-GUID bridge
+@@ -252,6 +253,11 @@ static const char* scancode_label(SDL_Scancode sc) {
+     return (n && n[0]) ? n : "(unbound)";
+ }
+ 
++static int is_gba_profile(const LauncherModel* m) {
++    const SystemProfile* prof = m ? (const SystemProfile*)m->profile : NULL;
++    return prof && prof->id && !strcmp(prof->id, "gba");
++}
++
+ static int is_snes_profile(const LauncherModel* m) {
+     const SystemProfile* prof = m ? (const SystemProfile*)m->profile : NULL;
+     return prof && prof->id && !strcmp(prof->id, "snes");
+@@ -355,6 +361,12 @@ static void reload_player_display(LauncherModel* m, int player) {
+         SDL_Scancode sc = recompui_keybinds_get_button(player, kb_index[b]);
+         copy_str(m->binds[player - 1][b], sizeof(m->binds[player - 1][b]), scancode_label(sc));
+     }
++    if (is_gba_profile(m)) {
++        for (int b = 0; b < 10; ++b)
++            rui_pad_binds_label(&kGbaPadSpec, psx_input_ini_path(),
++                psx_player_guid(m, player), b, m->pad_binds[player - 1][b],
++                sizeof(m->pad_binds[player - 1][b]));
++    }
+     if (is_snes_profile(m)) {
+         char controls[LNG_SNES_PAD_BUTTON_COUNT][48];
+         snes_gamepad_read_controls(player - 1, controls);
+@@ -1044,6 +1056,17 @@ void launcher_binds_set_field(LauncherModel* m, int player, int b, int slot,
+ void launcher_binds_set_pad_button(LauncherModel* m, int player, int b,
+                                    int kind, int code, int axis_dir) {
+     if (player < 1 || player > LNG_MAX_PLAYERS) return;
++    if (is_gba_profile(m)) {
++        if (player != 1 || b < 0 || b >= 10) return;
++        const char* guid = psx_player_guid(m, player);
++        if (!guid[0]) return;
++        launcher_ini_kv_write(psx_input_ini_path(), "controller", "guid", guid);
++        rui_pad_binds_set(&kGbaPadSpec, psx_input_ini_path(), guid, b, kind, code, axis_dir);
++        rui_pad_binds_remember(&kGbaPadSpec, psx_input_ini_path(), guid,
++            m->player_pad_name[player - 1], -1);
++        reload_player_display(m, player);
++        return;
++    }
+     if (is_psx_profile(m)) {
+         if (b < 0 || b >= LNG_PSX_PAD_BUTTON_COUNT) return;
+         const char* guid = psx_player_guid(m, player);
+@@ -1501,6 +1524,8 @@ void launcher_binds_reset_player(LauncherModel* m, int player) {
+         reload_player_display(m, player);
+         return;
+     }
++    if (is_gba_profile(m))
++        rui_pad_binds_reset(&kGbaPadSpec, psx_input_ini_path(), psx_player_guid(m, player));
+     recompui_keybinds_reset_player(player);
+     recompui_keybinds_save();
+     reload_player_display(m, player);
+diff --git a/src/common/launcher_model.c b/src/common/launcher_model.c
+index acb6db0..6a98799 100644
+--- a/src/common/launcher_model.c
++++ b/src/common/launcher_model.c
+@@ -580,6 +580,7 @@ void launcher_model_init(LauncherModel* m,
+         m->rom_patch_note       = game->rom_patch_note;
+         m->rom_patch_cache_dir  = game->rom_patch_cache_dir;
+         m->rom_patch_required_sha1 = game->rom_patch_required_sha1;
++        m->rom_patch_source_sha1 = game->rom_patch_source_sha1;
+ #if RECOMP_UI_ENABLE_MODS
+         m->mods                 = game->mods;
+ #else
+@@ -3009,11 +3010,21 @@ bool launcher_model_can_finish_setup(const LauncherModel* m) {
+     return true;
+ }
+ 
++bool launcher_model_rom_needs_patch(const LauncherModel* m) {
++    return m && m->rom_present && m->rom_patch_source_sha1 &&
++           m->rom_patch_source_sha1[0] && m->rom_sha1_hex[0] &&
++           strcmp(m->rom_sha1_hex, m->rom_patch_source_sha1) == 0 &&
++           !(m->rom_patch_supported && m->s.rom_patch_enabled &&
++             m->s.rom_patch_path[0]);
++}
++
+ bool launcher_model_can_launch(const LauncherModel* m) {
+     if (!m) return false;
+     if (!m->rom_present || strcmp(m->rom_size, "--") == 0) return false;
+     if (m->rom_patch_supported && m->s.rom_patch_enabled &&
+         !m->s.rom_patch_path[0]) return false;
++    if (launcher_model_rom_needs_patch(m))
++        return false;   /* stock source image needs its patch first */
+     if (m->profile && m->profile->verify.mode == 1) {
+         /* Disc systems: reject none/bad; warn (2) and ok (1) are playable. */
+         if (m->verify.verdict == 0 || m->verify.verdict == 3) return false;
+@@ -4152,11 +4163,22 @@ bool launcher_model_prepare_rom_patch(LauncherModel* m) {
+     recompui_sha1_compute(output, output_len, output_sha);
+     recompui_sha1_hex(output_sha, output_hex);
+     free(patch);
+-    if (m->rom_patch_required_sha1 && m->rom_patch_required_sha1[0] &&
+-        strcmp(output_hex, m->rom_patch_required_sha1) != 0) {
++    bool patch_sha_ok = !m->rom_patch_required_sha1 || !m->rom_patch_required_sha1[0] ||
++                        strcmp(output_hex, m->rom_patch_required_sha1) == 0;
++    if (!patch_sha_ok && m->known_sha1_hex) {
++        for (size_t k = 0; k < m->num_known_sha1; ++k) {
++            if (m->known_sha1_hex[k] &&
++                (!m->rom_patch_source_sha1 || strcmp(m->known_sha1_hex[k], m->rom_patch_source_sha1) != 0) &&
++                strcmp(output_hex, m->known_sha1_hex[k]) == 0) {
++                patch_sha_ok = true;
++                break;
++            }
++        }
++    }
++    if (!patch_sha_ok) {
+         free(output);
+-        safe_copy(m->rom_patch_status, sizeof(m->rom_patch_status),
+-                  "This executable was built for a different patch release.");
++        snprintf(m->rom_patch_status, sizeof(m->rom_patch_status),
++                 "Patched ROM SHA-1 %.40s is unsupported by this build.", output_hex);
+         return false;
+     }
+     snprintf(m->s.rom_patch_crc32, sizeof(m->s.rom_patch_crc32), "%08x",
+@@ -4484,7 +4506,7 @@ void launcher_model_map_all_advance(LauncherModel* m) {
+ }
+ void launcher_model_begin_assist_capture(LauncherModel* m, int action,
+                                          bool gamepad) {
+-    if (!m || action < 0 ||
++    if (!m->settings_bindings || action < 0 ||
+         action >= m->assist_binding_count)
+         return;
+     m->hk_capturing = false;
+@@ -4538,7 +4560,7 @@ void launcher_model_reset_player_bindings(LauncherModel* m, int player) {
+            sizeof m->s.player_pad_bind[player]);
+ }
+ void launcher_model_reset_assist_bindings(LauncherModel* m) {
+-    if (!m) return;
++    if (!m || !m->settings_bindings) return;
+     memcpy(m->s.assist_key_bind, m->default_assist_key_bind,
+            sizeof m->s.assist_key_bind);
+     memcpy(m->s.assist_pad_bind, m->default_assist_pad_bind,
+diff --git a/src/common/launcher_model.h b/src/common/launcher_model.h
+index 1e7fc30..04ce112 100644
+--- a/src/common/launcher_model.h
++++ b/src/common/launcher_model.h
+@@ -384,6 +384,7 @@ typedef struct {
+     const char* rom_patch_note;
+     const char* rom_patch_cache_dir;
+     const char* rom_patch_required_sha1;
++    const char* rom_patch_source_sha1;
+     char      rom_patch_status[256];
+     char      rom_patch_prepared_path[512];
+     char      rom_patch_prepared_sha1[41];
+@@ -1173,6 +1174,8 @@ void launcher_model_setup_start_bios_regen(LauncherModel* m);
+ // succeeded. Fingerprint mismatch is allowed here.
+ bool launcher_model_can_finish_setup(const LauncherModel* m);
+ // True when BIOS (if required) and ROM/disc are ready to launch (incl. fingerprint).
++/* Stock source image of a translation build that still needs its patch. */
++bool launcher_model_rom_needs_patch(const LauncherModel* m);
+ bool launcher_model_can_launch(const LauncherModel* m);
+ // True when the mounted disc is OK for online (TOC/cue policy + content).
+ // Non-disc games (verify.mode!=1) always return true when netplay is supported.
+diff --git a/src/consoles/gba/gba_profile.h b/src/consoles/gba/gba_profile.h
+index 3eff430..dfbe27b 100644
+--- a/src/consoles/gba/gba_profile.h
++++ b/src/consoles/gba/gba_profile.h
+@@ -80,6 +80,8 @@ static const SystemProfile kSystemProfileGba = {
+         kGbaPadButtons, LNG_GBA_PAD_BUTTON_COUNT,
+         "pad_gba.tga", NULL, NULL,     // handheld art; no analog/digital pair
+         /* max_players */ 1, /* has_pad_mode */ 0, /* link seats are netplay-only: create_max_slots */
++        /* binds_per_input */ 1, /* modes */ NULL, /* mode_count */ 0,
++        /* has_pad_binds */ 1,
+     },
+     // One battery save per cartridge: the runtime presents EEPROM/flash/SRAM
+     // uniformly as a single .sav next to the ROM (or game.toml [save].path).
+diff --git a/src/recomp_launcher.h b/src/recomp_launcher.h
+index d1021a7..5d74307 100644
+--- a/src/recomp_launcher.h
++++ b/src/recomp_launcher.h
+@@ -101,10 +101,6 @@ typedef struct RecompLauncherCNetplayLobby {
+     int  allow_spectators;
+     int  max_spectators;
+     int  spectator_count;
+-    /* 1 when latency_ms is a through-the-server estimate rather than a timed
+-     * direct link to the host (drawn with a "~"). 0 from a backend that
+-     * predates the field, which reads as measured. */
+-    int  latency_is_estimate;
+ } RecompLauncherCNetplayLobby;
+ 
+ /* One player connected to the lobby server, seated or just browsing -- the
+@@ -1406,8 +1402,6 @@ struct RecompLauncherCSettings {
+     // ABI stability.
+     int  assist_fast_forward_multiplier;
+ 
+-    /* Named host shortcuts are independent of settings_bindings: a host can
+-     * retain its legacy gameplay binding store and still consume these. */
+     int assist_key_bind[RECOMP_LAUNCHER_MAX_ASSIST_BINDINGS];
+     int assist_pad_bind[RECOMP_LAUNCHER_MAX_ASSIST_BINDINGS];
+ 
+@@ -2145,13 +2139,17 @@ typedef struct RecompLauncherCGameInfo {
+     int assist_fast_forward_max;
+ 
+     /* Optional general ROM-patch surface. recomp-ui applies classic IPS,
+-     * IPS32, and checksum-verified BPS to a verified stock image. The cache
++     * IPS32, and checksum-verified BPS/UPS to a verified stock image. The cache
+      * directory must already exist and should be owned by the host beside its
+      * other mod data. NULL note uses the shared compatibility warning. */
+     int rom_patch_supported;
+     const char* rom_patch_note;
+     const char* rom_patch_cache_dir;
+     const char* rom_patch_required_sha1;
++    /* Translation builds that accept BOTH a stock source image (patched here)
++     * and an already-patched image: a ROM matching this SHA-1 may launch only
++     * with a ROM patch enabled. NULL keeps the original behavior. */
++    const char* rom_patch_source_sha1;
+ 
+     /* ---- multi-image titles (appended additively) ------------------------
+      * The roster of discs this build was made from, in disc order. When
+diff --git a/src/consoles/gba/gba_pad_binds.h b/src/consoles/gba/gba_pad_binds.h
+new file mode 100644
+index 0000000..cb8ec44
+--- /dev/null
++++ b/src/consoles/gba/gba_pad_binds.h
+@@ -0,0 +1,12 @@
++#pragma once
++#include "pad_binds.h"
++static const char* const kGbaPadKeys[] = {
++    "up", "down", "left", "right", "a", "b", "l", "r", "start", "select"
++};
++static const char* const kGbaPadDefaults[] = {
++    "dpup", "dpdown", "dpleft", "dpright", "a", "b",
++    "leftshoulder", "rightshoulder", "start", "back"
++};
++static const RuiPadSpec kGbaPadSpec = {
++    kGbaPadKeys, kGbaPadDefaults, 10, 4, 15, 0, NULL, NULL, 0
++};

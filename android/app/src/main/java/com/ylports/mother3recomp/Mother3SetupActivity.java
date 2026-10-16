@@ -1,7 +1,6 @@
 package com.ylports.mother3recomp;
 
 import android.app.AlertDialog;
-import android.os.Bundle;
 
 import org.gbarecomp.GbaSetupActivity;
 
@@ -19,33 +18,26 @@ import java.nio.charset.StandardCharsets;
  * nothing.
  */
 public final class Mother3SetupActivity extends GbaSetupActivity {
-    private static final String PREFS = "mother3_diagnostics";
-    private static final String LAST_LOG = "last_log_snapshot";
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        // Avoid a crash/relaunch loop while the Android port is in bring-up.
-        getSharedPreferences("setup", MODE_PRIVATE)
-            .edit()
-            .putBoolean("skip_launcher_on_boot", false)
-            .apply();
-        super.onCreate(savedInstanceState);
-    }
+    protected boolean supportsAutomaticLaunch() { return false; }
 
     @Override
     protected void onResume() {
-        // Keep automatic relaunch off even if PLAY's shared launcher checkbox
-        // wrote it immediately before the native Activity started.
-        getSharedPreferences("setup", MODE_PRIVATE)
-            .edit()
-            .putBoolean("skip_launcher_on_boot", false)
-            .apply();
-
         super.onResume();
         showNativeLogIfChanged();
     }
 
     private void showNativeLogIfChanged() {
+        File status = new File(getFilesDir(), "android-exit-code");
+        if (!status.isFile()) return;
+        try {
+            String code = readTail(status, 32).trim();
+            status.delete();
+            if (code.equals("0")) return;
+        } catch (IOException error) {
+            return;
+        }
         File log = new File(getFilesDir(), "android-runtime.log");
         if (!log.isFile() || log.length() == 0) return;
 
@@ -57,21 +49,36 @@ public final class Mother3SetupActivity extends GbaSetupActivity {
         }
         if (text.trim().isEmpty()) return;
 
-        String previous = getSharedPreferences(PREFS, MODE_PRIVATE)
-            .getString(LAST_LOG, "");
-        if (text.equals(previous)) return;
-
-        getSharedPreferences(PREFS, MODE_PRIVATE)
-            .edit()
-            .putString(LAST_LOG, text)
-            .apply();
-
         final String visible = lastLines(text, 45);
         new AlertDialog.Builder(this)
-            .setTitle("MOTHER 3 — último arranque")
+            .setTitle("MOTHER 3 - startup failed")
             .setMessage(visible)
+            .setNeutralButton("Copy diagnostics", (dialog, which) -> copyDiagnostics())
             .setPositiveButton("OK", null)
             .show();
+    }
+
+    @Override
+    protected void addGameActions(android.widget.LinearLayout preferences) {
+        android.widget.Button button = new android.widget.Button(this);
+        button.setText("Copy diagnostics");
+        button.setOnClickListener(view -> copyDiagnostics());
+        preferences.addView(button);
+    }
+
+    private void copyDiagnostics() {
+        String text = "MOTHER 3 | " + android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL
+            + " | Android " + android.os.Build.VERSION.RELEASE + "\n";
+        try {
+            text += "App " + getPackageManager().getPackageInfo(getPackageName(), 0).versionName + "\n";
+            text += readTail(new File(getFilesDir(), "android-runtime.log"), 12000);
+        } catch (Exception error) {
+            text += "No startup log available: " + error.getMessage();
+        }
+        android.content.ClipboardManager clipboard = (android.content.ClipboardManager)
+            getSystemService(CLIPBOARD_SERVICE);
+        clipboard.setPrimaryClip(android.content.ClipData.newPlainText("MOTHER 3 diagnostics", text));
+        android.widget.Toast.makeText(this, "Diagnostics copied", android.widget.Toast.LENGTH_SHORT).show();
     }
 
     private static String readTail(File file, int maxBytes) throws IOException {

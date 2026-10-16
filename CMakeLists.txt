@@ -47,6 +47,9 @@ function(add_gba_variant TARGET NAME PORT WIN_TITLE GAME_NAME ROM_SHA1 ROM_CRC32
         "${VARIANT_DIR}/generated/*.cpp")
 
     set(VARIANT_GAME_SOURCES src/main.cpp)
+    if(NAME STREQUAL "mother3en")
+        list(APPEND VARIANT_GAME_SOURCES src/mother3_runtime_hooks.cpp)
+    endif()
 
     # Generated C/C++ is deliberately not committed because it is derived from
     # a copyrighted ROM.  A public checkout therefore boots through the
@@ -105,6 +108,9 @@ function(add_gba_variant TARGET NAME PORT WIN_TITLE GAME_NAME ROM_SHA1 ROM_CRC32
         gbarecomp_armv4t
         "-Wl,--end-group")
 
+    if(NAME STREQUAL "mother3en")
+        target_compile_definitions(${TARGET} PRIVATE MOTHER3_EN_RUNTIME_HOOKS=1)
+    endif()
     if(VARIANT_BOOTSTRAP_INTERP)
         target_compile_definitions(${TARGET} PRIVATE MOTHER3_BOOTSTRAP_INTERP=1)
     endif()

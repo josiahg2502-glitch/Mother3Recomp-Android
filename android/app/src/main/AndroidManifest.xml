@@ -18,6 +18,7 @@
         <meta-data android:name="gbarecomp.title" android:value="${gbaTitle}" />
         <meta-data android:name="gbarecomp.rom_label" android:value="${gbaRomLabel}" />
         <meta-data android:name="gbarecomp.rom_sha1" android:value="${gbaRomSha1}" />
+        <meta-data android:name="gbarecomp.rom_patch_source_sha1" android:value="${gbaRomPatchSourceSha1}" />
         <meta-data android:name="gbarecomp.rom_size" android:value="${gbaRomSize}" />
         <meta-data android:name="gbarecomp.rom_file" android:value="${gbaRomFile}" />
         <meta-data android:name="gbarecomp.bios_required" android:value="${gbaBiosRequired}" />
