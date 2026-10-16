@@ -6,6 +6,11 @@ on:
     paths:
       - "android/**"
       - "src/**"
+      - "dependencies.lock.json"
+      - "patches/**"
+      - "tests/**"
+      - "tools/setup_deps.py"
+      - "tools/check_android_package.py"
       - "CMakeLists.txt"
       - ".github/workflows/android.yml"
   push:
@@ -16,6 +21,11 @@ on:
       - "variants/**"
       - "gbarecomp"
       - "recomp-ui"
+      - "dependencies.lock.json"
+      - "patches/**"
+      - "tests/**"
+      - "tools/setup_deps.py"
+      - "tools/check_android_package.py"
       - "CMakeLists.txt"
       - ".github/workflows/android.yml"
   workflow_dispatch:
@@ -29,16 +39,16 @@ on:
           - en
           - jpn
 
+concurrency:
+  group: android-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   apk:
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      matrix:
-        variant: [en, jpn]
     env:
-      MOTHER3_VARIANT: ${{ matrix.variant }}
+      MOTHER3_VARIANT: ${{ inputs.variant || 'en' }}
 
     steps:
       - name: Checkout
