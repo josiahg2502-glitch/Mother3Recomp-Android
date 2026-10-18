@@ -26,6 +26,10 @@ if(NOT EXISTS "${GBARECOMP_ROOT}/CMakeLists.txt")
         "-DGBARECOMP_ROOT=<path>.")
 endif()
 
+if(ANDROID)
+    set(FETCHCONTENT_UPDATES_DISCONNECTED ON CACHE BOOL "" FORCE)
+endif()
+
 add_subdirectory("${GBARECOMP_ROOT}" gbarecomp_build EXCLUDE_FROM_ALL)
 
 if(NOT ANDROID)
@@ -46,10 +50,7 @@ function(add_gba_variant TARGET NAME PORT WIN_TITLE GAME_NAME ROM_SHA1 ROM_CRC32
         "${VARIANT_DIR}/generated/*.c"
         "${VARIANT_DIR}/generated/*.cpp")
 
-    set(VARIANT_GAME_SOURCES src/main.cpp)
-    if(NAME STREQUAL "mother3en")
-        list(APPEND VARIANT_GAME_SOURCES src/mother3_runtime_hooks.cpp)
-    endif()
+    set(VARIANT_GAME_SOURCES src/main.cpp src/mother3_runtime_hooks.cpp)
 
     # Generated C/C++ is deliberately not committed because it is derived from
     # a copyrighted ROM.  A public checkout therefore boots through the
@@ -85,6 +86,12 @@ function(add_gba_variant TARGET NAME PORT WIN_TITLE GAME_NAME ROM_SHA1 ROM_CRC32
             ${VARIANT_GENERATED})
     endif()
 
+    file(READ "${CMAKE_CURRENT_SOURCE_DIR}/src/m4a_hq_mixer_no_fix.bin" HQ_AUDIO_MIXER_HEX HEX)
+    string(REGEX REPLACE "(..)" "0x\\1," HQ_AUDIO_MIXER_BYTES "${HQ_AUDIO_MIXER_HEX}")
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/hq_audio_mixer_data.h"
+        "#pragma once\n#include <cstdint>\nstatic constexpr std::uint8_t kHqAudioMixer[] = {${HQ_AUDIO_MIXER_BYTES}};\n")
+    target_include_directories(${TARGET} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+
     set(VARIANT_RECOMPILED_SOURCES ${VARIANT_GENERATED})
     list(FILTER VARIANT_RECOMPILED_SOURCES INCLUDE REGEX
         "/recompiled_[0-9]+\\.cpp$")
@@ -98,6 +105,7 @@ function(add_gba_variant TARGET NAME PORT WIN_TITLE GAME_NAME ROM_SHA1 ROM_CRC32
         "${GBARECOMP_ROOT}/src/gba"
         "${GBARECOMP_ROOT}/src/runtime"
         "${GBARECOMP_ROOT}/src/debug"
+        "${RECOMP_UI_ROOT}/src/common"
         src)
 
     target_link_libraries(${TARGET} PRIVATE
@@ -108,9 +116,7 @@ function(add_gba_variant TARGET NAME PORT WIN_TITLE GAME_NAME ROM_SHA1 ROM_CRC32
         gbarecomp_armv4t
         "-Wl,--end-group")
 
-    if(NAME STREQUAL "mother3en")
-        target_compile_definitions(${TARGET} PRIVATE MOTHER3_EN_RUNTIME_HOOKS=1)
-    endif()
+    target_compile_definitions(${TARGET} PRIVATE MOTHER3_EN_RUNTIME_HOOKS=1)
     if(VARIANT_BOOTSTRAP_INTERP)
         target_compile_definitions(${TARGET} PRIVATE MOTHER3_BOOTSTRAP_INTERP=1)
     endif()
