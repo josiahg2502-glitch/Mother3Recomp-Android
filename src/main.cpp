@@ -10,11 +10,9 @@
 
 #include "runtime.h"
 #include "mobile_platform.h"
-#if defined(MOTHER3_EN_RUNTIME_HOOKS)
 #include "mother3_runtime_hooks.h"
-#endif
 #if defined(__ANDROID__)
-#include "../recomp-ui/src/common/ips_patch.h"
+#include "ips_patch.h"
 #include <jni.h>
 #endif
 
@@ -93,17 +91,17 @@ int mother3_main(int argc, char** argv) {
     setenv("GBARECOMP_FORCE_INTERP", "1", 1);
 #endif
 
-#if defined(MOTHER3_EN_RUNTIME_HOOKS)
     mother3_install_runtime_hooks();
-#endif
     gbarecomp::RunOptions opts;
     opts.builtin_game_name = GBARECOMP_BUILTIN_NAME;
     opts.builtin_rom_sha1 =
         (sizeof(GBARECOMP_BUILTIN_SHA1) > 1) ? GBARECOMP_BUILTIN_SHA1 : nullptr;
     opts.builtin_rom_crc32 = GBARECOMP_BUILTIN_CRC32;
-#if defined(MOTHER3_EN_RUNTIME_HOOKS)
     opts.alt_rom_sha1 = "4ffe71ce5c5e1e8d9be5fbd09968b60787169b21";
-#endif
+    opts.launcher_enable_rom_patches = true;
+    opts.launcher_source_rom_sha1 = "4f0f493e12c2a8c61b2d809af03f7abf87a85776";
+    opts.launcher_accept_patched_rom = true;
+    opts.rom_post_load_hook = &mother3_apply_hq_audio_patch;
     opts.launcher_region =
         (sizeof(GBARECOMP_BUILTIN_REGION) > 1) ? GBARECOMP_BUILTIN_REGION : nullptr;
     opts.launcher_boxart =
